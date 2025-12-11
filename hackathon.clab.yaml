@@ -1,0 +1,39 @@
+name: hackathon
+prefix: ""
+topology:
+  defaults:
+    kind: nokia_srlinux
+  kinds:
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux:25.10.1
+      startup-config: config/__clabNodeName__.partial.txt
+      type: ixr-d3l
+    linux:
+      image: ghcr.io/srl-labs/network-multitool
+  nodes:
+    spine1:
+      type: ixr-h4-32d
+    spine2:
+      type: ixr-h4-32d
+    leaf1:
+    leaf2:
+    client1:
+      kind: linux
+      exec:
+        - ip addr add 192.168.1.2/24 dev eth1
+        - ip route add 192.168.2.0/24 via 192.168.1.1
+    client2:
+      kind: linux
+      exec:
+        - ip addr add 192.168.2.2/24 dev eth1
+        - ip route add 192.168.1.0/24 via 192.168.2.1
+
+  links:
+    - endpoints: ["spine1:ethernet-1/1", "leaf1:ethernet-1/31"]
+    - endpoints: ["spine2:ethernet-1/1", "leaf1:ethernet-1/32"]
+    - endpoints: ["spine1:ethernet-1/2", "leaf2:ethernet-1/31"]
+    - endpoints: ["spine2:ethernet-1/2", "leaf2:ethernet-1/32"]
+    - endpoints: ["leaf1:ethernet-1/30", "leaf2:ethernet-1/30"]
+    - endpoints: ["leaf1:ethernet-1/1", "client1:eth1"]
+    - endpoints: ["leaf2:ethernet-1/1", "client2:eth1"]
+
