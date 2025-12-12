@@ -5,10 +5,19 @@ system {
     }
 }
 network-instance default {
+    interface ethernet-1/1.0 {
+    }
+    interface ethernet-1/2.0 {
+    }
+    interface system0.0 {
+    }
     protocols {
         bgp {
             autonomous-system 65100
             router-id 10.0.0.12
+            afi-safi evpn {
+                admin-state enable
+            }
             afi-safi ipv4-unicast {
                 admin-state enable
             }
@@ -19,22 +28,31 @@ network-instance default {
                 import-policy [
                     import-underlay
                 ]
+                afi-safi evpn {
+                    admin-state disable
+                }
             }
             group ibgp-overlay {
                 next-hop-self true
+                peer-as 65000
                 export-policy [
-                    export-overlay
+                    accept-all
                 ]
                 import-policy [
-                    import-overlay
+                    accept-all
                 ]
+                afi-safi evpn {
+                    admin-state enable
+                }
+                afi-safi ipv4-unicast {
+                    admin-state disable
+                }
                 local-as {
                     as-number 65000
                 }
-                peer-as 65000
                 route-reflector {
                     client true
-                    cluster-id 10.0.0.0 
+                    cluster-id 10.0.0.0
                 }
                 transport {
                     local-address 10.0.0.12
@@ -56,12 +74,7 @@ network-instance default {
             }
         }
     }
-    interface system0.0 {
-    }
-    interface ethernet-1/1.0 {
-    }
-    interface ethernet-1/2.0 {
-    }
+
 }
 interface system0 {
     admin-state enable
@@ -101,14 +114,9 @@ routing-policy {
         prefix 10.0.0.0/24 mask-length-range 32..32 {
         }
     }
-    policy export-overlay {
-        statement accept-bgp {
-            match {
-                protocol bgp
-            }
-            action {
-                policy-result accept
-            }
+    policy accept-all {
+        default-action {
+            policy-result accept
         }
     }
     policy export-underlay {
@@ -117,16 +125,6 @@ routing-policy {
                 prefix {
                     prefix-set loopbacks
                 }
-            }
-            action {
-                policy-result accept
-            }
-        }
-    }
-    policy import-overlay {
-        statement accept-bgp {
-            match {
-                protocol bgp
             }
             action {
                 policy-result accept

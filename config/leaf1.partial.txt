@@ -9,24 +9,39 @@ network-instance default {
         bgp {
             autonomous-system 65001
             router-id 10.0.0.1
+            afi-safi evpn {
+                admin-state enable
+            }
             afi-safi ipv4-unicast {
                 admin-state enable
             }
             group ebgp-underlay {
+                afi-safi evpn {
+                    admin-state disable
+                }
+                afi-safi ipv4-unicast {
+                    admin-state enable
+                }
                 export-policy [
-                    export-underlay
+                    export-underlay 
                 ]
                 import-policy [
                     import-underlay
                 ]
             }
             group ibgp-overlay {
+                afi-safi evpn {
+                    admin-state enable
+                }
+                afi-safi ipv4-unicast {
+                    admin-state disable
+                }
                 peer-as 65000
                 export-policy [
-                    export-overlay
+                    accept-all
                 ]
                 import-policy [
-                    import-overlay
+                    accept-all
                 ]
                 local-as {
                     as-number 65000
@@ -53,11 +68,34 @@ network-instance default {
     }
     interface system0.0 {
     }
-    interface ethernet-1/1.0 {
-    }
     interface ethernet-1/31.0 {
     }
     interface ethernet-1/32.0 {
+    }
+}
+network-instance l2 {
+    type mac-vrf
+    admin-state enable
+    interface ethernet-1/1.0 {
+    }
+    vxlan-interface vxlan1.100 {
+    }
+    protocols {
+        bgp-evpn {
+            bgp-instance 1 {
+                admin-state enable
+                vxlan-interface vxlan1.100
+                evi 100
+            }
+        }
+        bgp-vpn {
+            bgp-instance 1 {
+                route-target {
+                    export-rt target:65000:100
+                    import-rt target:65000:100
+                }
+            }
+        }
     }
 }
 interface system0 {
@@ -73,11 +111,15 @@ interface system0 {
 }
 interface ethernet-1/1 {
     admin-state enable
+    vlan-tagging true
     subinterface 0 {
+        type bridged
         admin-state enable
-        ipv4 {
-            admin-state enable
-            address 192.168.1.1/24 {
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 100
+                }
             }
         }
     }
@@ -105,24 +147,13 @@ interface ethernet-1/32 {
     }
 }
 routing-policy {
-    prefix-set clients {
-        prefix 192.168.0.0/22 mask-length-range 24..24 {
-        }
-    }
     prefix-set loopbacks {
         prefix 10.0.0.0/24 mask-length-range 32..32 {
         }
     }
-    policy export-overlay {
-        statement accept-clients {
-            match {
-                prefix {
-                    prefix-set clients
-                }
-            }
-            action {
-                policy-result accept
-            }
+    policy accept-all {
+        default-action {
+            policy-result accept
         }
     }
     policy export-underlay {
@@ -130,18 +161,6 @@ routing-policy {
             match {
                 prefix {
                     prefix-set loopbacks
-                }
-            }
-            action {
-                policy-result accept
-            }
-        }
-    }
-    policy import-overlay {
-        statement accept-clients {
-            match {
-                prefix {
-                    prefix-set clients
                 }
             }
             action {
@@ -162,4 +181,14 @@ routing-policy {
         }
     }
 }
-
+tunnel-interface vxlan1 {
+    vxlan-interface 100 {
+        type bridged
+        ingress {
+            vni 100
+        }
+        egress {
+            source-ip use-system-ipv4-address
+        }
+    }
+}
