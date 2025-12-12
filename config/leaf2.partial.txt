@@ -100,6 +100,67 @@ network-instance l2 {
         }
     }
 }
+network-instance l2-irb1 {
+    type mac-vrf
+    admin-state enable
+    interface ethernet-1/1.2 {
+    }
+    interface irb0.210 {
+    }
+    vxlan-interface vxlan1.210 {
+    }
+    protocols {
+        bgp-evpn {
+            bgp-instance 1 {
+                admin-state enable
+                vxlan-interface vxlan1.210
+                evi 210
+            }
+        }
+        bgp-vpn {
+            bgp-instance 1 {
+                route-target {
+                    export-rt target:65000:210
+                    import-rt target:65000:210
+                }
+            }
+        }
+    }
+}
+network-instance l2-irb2 {
+    type mac-vrf
+    admin-state enable
+    interface ethernet-1/2.2 {
+    }
+    interface irb0.211 {
+    }
+    vxlan-interface vxlan1.211 {
+    }
+    protocols {
+        bgp-evpn {
+            bgp-instance 1 {
+                admin-state enable
+                vxlan-interface vxlan1.211
+                evi 211
+            }
+        }
+        bgp-vpn {
+            bgp-instance 1 {
+                route-target {
+                    export-rt target:65000:211
+                    import-rt target:65000:211
+                }
+            }
+        }
+    }
+}
+network-instance l3-irb {
+    type ip-vrf
+    interface irb0.210 {
+    }
+    interface irb0.211 {
+    }
+}
 network-instance routed {
     type ip-vrf
     interface ethernet-1/1.1 {
@@ -167,6 +228,17 @@ interface ethernet-1/1 {
             }
         }
     }
+    subinterface 2 {
+        type bridged
+        admin-state enable
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 210
+                }
+            }
+        }
+    }
 }
 interface ethernet-1/2 {
     admin-state enable
@@ -198,6 +270,17 @@ interface ethernet-1/2 {
             }
         }
     }
+    subinterface 2 {
+        type bridged
+        admin-state enable
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 211
+                }
+            }
+        }
+    }
 }
 interface ethernet-1/31 {
     admin-state enable
@@ -218,6 +301,28 @@ interface ethernet-1/32 {
             admin-state enable
             address 10.0.10.7/31 {
             }
+        }
+    }
+}
+interface irb0 {
+    subinterface 210 {
+        ipv4 {
+            admin-state enable
+            address 192.168.210.254/24 {
+                anycast-gw true
+            }
+        }
+        anycast-gw {
+        }
+    }
+    subinterface 211 {
+        ipv4 {
+            admin-state enable
+            address 192.168.211.254/24 {
+                anycast-gw true
+            }
+        }
+        anycast-gw {
         }
     }
 }
@@ -275,6 +380,24 @@ tunnel-interface vxlan1 {
         type routed
         ingress {
             vni 200
+        }
+        egress {
+            source-ip use-system-ipv4-address
+        }
+    }
+    vxlan-interface 210 {
+        type bridged
+        ingress {
+            vni 210
+        }
+        egress {
+            source-ip use-system-ipv4-address
+        }
+    }
+    vxlan-interface 211 {
+        type bridged
+        ingress {
+            vni 211
         }
         egress {
             source-ip use-system-ipv4-address
