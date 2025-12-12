@@ -39,10 +39,10 @@ network-instance default {
                 next-hop-self true
                 peer-as 65000
                 export-policy [
-                    accept-all
+                    accept-evpn
                 ]
                 import-policy [
-                    accept-all
+                    accept-evpn
                 ]
                 afi-safi evpn {
                     admin-state enable
@@ -116,9 +116,14 @@ routing-policy {
         prefix 10.0.0.0/24 mask-length-range 32..32 {
         }
     }
-    policy accept-all {
-        default-action {
-            policy-result accept
+    policy accept-evpn {
+        statement accept-evpn {
+            match {
+                family [ evpn ]
+            }
+            action {
+                policy-result accept
+            }
         }
     }
     policy export-underlay {
