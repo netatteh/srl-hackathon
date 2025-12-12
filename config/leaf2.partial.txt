@@ -311,6 +311,13 @@ interface irb0 {
             address 192.168.210.254/24 {
                 anycast-gw true
             }
+            arp {
+                learn-unsolicited true
+                evpn {
+                    advertise dynamic {
+                    }
+                }
+            }
         }
         anycast-gw {
         }
@@ -320,6 +327,13 @@ interface irb0 {
             admin-state enable
             address 192.168.211.254/24 {
                 anycast-gw true
+            }
+            arp {
+                learn-unsolicited true
+                evpn {
+                    advertise dynamic {
+                    }
+                }
             }
         }
         anycast-gw {
