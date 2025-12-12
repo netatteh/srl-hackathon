@@ -100,6 +100,32 @@ network-instance l2 {
         }
     }
 }
+network-instance routed {
+    type ip-vrf
+    interface ethernet-1/1.1 {
+    }
+    interface ethernet-1/2.1 {
+    }
+    vxlan-interface vxlan1.200 {
+    }
+    protocols {
+        bgp-evpn {
+            bgp-instance 1 {
+                admin-state enable
+                vxlan-interface vxlan1.200
+                evi 200
+            }
+        }
+        bgp-vpn {
+            bgp-instance 1 {
+                route-target {
+                    export-rt target:65000:200
+                    import-rt target:65000:200
+                }
+            }
+        }
+    }
+}
 interface system0 {
     admin-state enable
     subinterface 0 {
@@ -125,6 +151,22 @@ interface ethernet-1/1 {
             }
         }
     }
+    subinterface 1 {
+        type routed
+        admin-state enable
+        ipv4 {
+            admin-state enable
+            address 192.168.202.1/24 {
+            }
+        }
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 200
+                }
+            }
+        }
+    }
 }
 interface ethernet-1/2 {
     admin-state enable
@@ -136,6 +178,22 @@ interface ethernet-1/2 {
             encap {
                 single-tagged {
                     vlan-id 100
+                }
+            }
+        }
+    }
+    subinterface 1 {
+        type routed
+        admin-state enable
+        ipv4 {
+            admin-state enable
+            address 192.168.203.1/24 {
+            }
+        }
+        vlan {
+            encap {
+                single-tagged {
+                    vlan-id 200
                 }
             }
         }
@@ -208,6 +266,15 @@ tunnel-interface vxlan1 {
         type bridged
         ingress {
             vni 100
+        }
+        egress {
+            source-ip use-system-ipv4-address
+        }
+    }
+    vxlan-interface 200 {
+        type routed
+        ingress {
+            vni 200
         }
         egress {
             source-ip use-system-ipv4-address
